@@ -1,0 +1,65 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user preferences and Steam integration details.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "steamId": { "type": "string", "description": "User's Steam ID" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "createdAt"]
+    },
+    "GameProgress": {
+      "title": "Game Progress",
+      "description": "Tracks playtime and progress for a specific game.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "gameId": { "type": "string" },
+        "gameName": { "type": "string" },
+        "playtimeTotal": { "type": "number" },
+        "lastPlayed": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" }
+      },
+      "required": ["uid", "gameId"]
+    },
+    "Soundtrack": {
+      "title": "Soundtrack Recommendation",
+      "description": "AI recommended soundtracks for a game.",
+      "type": "object",
+      "properties": {
+        "gameId": { "type": "string" },
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "artist": { "type": "string" },
+              "reason": { "type": "string" }
+            }
+          }
+        },
+        "generatedClipUrl": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "UserProfile",
+      "description": "User profile data"
+    },
+    "/users/{uid}/games/{gameId}": {
+      "schema": "GameProgress",
+      "description": "Per-game progress for a user"
+    },
+    "/games/{gameId}/soundtracks": {
+      "schema": "Soundtrack",
+      "description": "Global soundtrack recommendations for a game"
+    }
+  }
+}

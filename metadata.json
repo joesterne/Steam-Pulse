@@ -1,0 +1,6 @@
+{
+  "name": "Steam Pulse",
+  "description": "A personalized gaming dashboard that tracks your Steam playtime, recommends soundtracks using Gemini AI, and generates custom music clips with Lyria.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["AI Recommendations", "Music Generation", "Steam Integration"]
+}
