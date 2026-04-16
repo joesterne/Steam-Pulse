@@ -24,6 +24,14 @@ service cloud.firestore {
     //   - lastPlayed: timestamp
     //   - notes: string
     //
+    // Collection: gameNotes
+    // Document ID: {uid}_{gameId}
+    // Fields:
+    //   - userId: string (required)
+    //   - gameId: string (required)
+    //   - note: string
+    //   - updatedAt: string (ISO date)
+    //
     // ===============================================================
 
     // ===============================================================
@@ -51,9 +59,24 @@ service cloud.firestore {
              data.gameId.size() < 128;
     }
 
+    function isValidNote(data) {
+      return data.keys().hasAll(['userId', 'gameId', 'note']) &&
+             data.userId == request.auth.uid &&
+             data.userId is string &&
+             data.gameId is string &&
+             data.note is string &&
+             data.note.size() < 5000;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
+
+    match /gameNotes/{noteId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create, update: if isAuthenticated() && isValidNote(request.resource.data) && noteId == request.auth.uid + "_" + request.resource.data.gameId;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
 
     match /users/{uid} {
       allow read: if isOwner(uid);
