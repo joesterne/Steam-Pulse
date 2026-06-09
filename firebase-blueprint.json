@@ -46,6 +46,20 @@
         },
         "generatedClipUrl": { "type": "string" }
       }
+    },
+    "WishlistItem": {
+      "title": "Wishlist Item",
+      "description": "A game saved to the user's wishlist.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "gameId": { "type": "string" },
+        "gameName": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "price": { "type": "string" },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "gameId", "gameName", "addedAt"]
     }
   },
   "firestore": {
@@ -60,6 +74,10 @@
     "/games/{gameId}/soundtracks": {
       "schema": "Soundtrack",
       "description": "Global soundtrack recommendations for a game"
+    },
+    "/wishlist/{wishlistId}": {
+      "schema": "WishlistItem",
+      "description": "Global wishlist collection using userId_gameId as ID"
     }
   }
 }

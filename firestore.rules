@@ -68,6 +68,18 @@ service cloud.firestore {
              data.note.size() < 5000;
     }
 
+    function isValidWishlistItem(data) {
+      return data.keys().hasAll(['userId', 'gameId', 'gameName', 'addedAt']) &&
+             data.userId == request.auth.uid &&
+             data.userId is string &&
+             data.userId.size() < 128 &&
+             data.gameId is string &&
+             data.gameId.size() < 128 &&
+             data.gameName is string &&
+             data.gameName.size() < 500 &&
+             data.addedAt is string;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -75,6 +87,12 @@ service cloud.firestore {
     match /gameNotes/{noteId} {
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
       allow create, update: if isAuthenticated() && isValidNote(request.resource.data) && noteId == request.auth.uid + "_" + request.resource.data.gameId;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    match /wishlist/{wishlistId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create, update: if isAuthenticated() && isValidWishlistItem(request.resource.data) && wishlistId == request.auth.uid + "_" + request.resource.data.gameId;
       allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
 
