@@ -27,6 +27,11 @@ import com.example.steampulse.model.MOCK_GAMES
 import com.example.steampulse.ui.theme.SteamPulseTheme
 import com.example.steampulse.ui.theme.TextDim
 
+import kotlinx.coroutines.launch
+import com.example.steampulse.data.FirestoreManager
+import com.example.steampulse.data.GeminiApiManager
+import com.example.steampulse.data.SteamApiManager
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +54,16 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DashboardScreen(modifier: Modifier = Modifier) {
     var selectedGame by remember { mutableStateOf<Game?>(MOCK_GAMES.first()) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            FirestoreManager.initializeAuth()
+            MOCK_GAMES.forEach {
+                FirestoreManager.saveGamePlaytime(it)
+            }
+        }
+    }
 
     LazyColumn(
         modifier = modifier
@@ -57,7 +72,17 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            DashboardHeader()
+            DashboardHeader(onImportSteam = {
+                scope.launch {
+                    val steamId = "76561197960434622" // Replace with real Steam ID
+                    val apiKey = "YOUR_STEAM_API_KEY" // Replace with real API Key
+                    
+                    val importedGames = SteamApiManager.fetchAndSaveRecentlyPlayedGames(steamId, apiKey)
+                    if (importedGames.isNotEmpty()) {
+                        selectedGame = importedGames.first()
+                    }
+                }
+            })
         }
         item {
             ActiveMissionCard(game = selectedGame)
@@ -74,7 +99,9 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardHeader() {
+fun DashboardHeader(
+    onImportSteam: () -> Unit
+) {
     var searchQuery by remember { mutableStateOf("") }
 
     Row(
@@ -102,11 +129,29 @@ fun DashboardHeader() {
             ),
             singleLine = true
         )
+        Button(
+            onClick = onImportSteam,
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.height(56.dp)
+        ) {
+            Text("Import Steam Data", fontSize = 12.sp)
+        }
     }
 }
 
 @Composable
 fun ActiveMissionCard(game: Game?) {
+    val scope = rememberCoroutineScope()
+    var savedSoundtrack by remember { mutableStateOf<String?>(null) }
+    var recommendations by remember(game) { mutableStateOf<List<String>>(emptyList()) }
+
+    LaunchedEffect(game) {
+        if (game != null) {
+            recommendations = FirestoreManager.getSoundtrackRecommendations(game.id)
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth().height(300.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -149,9 +194,14 @@ fun ActiveMissionCard(game: Game?) {
                         fontSize = 14.sp
                     )
                     Spacer(modifier = Modifier.weight(1f))
+                    if (recommendations.isNotEmpty()) {
+                        Text("SAVED SOUNDTRACKS: ${recommendations.joinToString()}", color = MaterialTheme.colorScheme.secondary, fontSize = 10.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
                             Text("ACHIEVEMENTS", color = TextDim, fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -163,9 +213,21 @@ fun ActiveMissionCard(game: Game?) {
                             Text("COMPLETION", color = MaterialTheme.colorScheme.secondary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                             Text("$completion%", color = Color.White, fontWeight = FontWeight.Bold)
                         }
-                        Column {
-                            Text("PLAYTIME", color = TextDim, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                            Text("${game.playtime} Hrs", color = Color.White, fontWeight = FontWeight.Bold)
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    val apiKey = "YOUR_GEMINI_API_KEY" // Needs to be replaced with the actual key
+                                    val results = GeminiApiManager.getSoundtrackRecommendations(game.name, apiKey)
+                                    if (results.isNotEmpty()) {
+                                        FirestoreManager.saveSoundtrackRecommendation(game.id, results.joinToString(", "))
+                                        recommendations = FirestoreManager.getSoundtrackRecommendations(game.id)
+                                    }
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Get AI Soundtracks", fontSize = 10.sp)
                         }
                     }
                 } else {
