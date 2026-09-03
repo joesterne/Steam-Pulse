@@ -26,6 +26,7 @@ import com.example.steampulse.model.Game
 import com.example.steampulse.model.MOCK_GAMES
 import com.example.steampulse.ui.theme.SteamPulseTheme
 import com.example.steampulse.ui.theme.TextDim
+import com.example.steampulse.ui.components.PlaytimeChart
 
 import kotlinx.coroutines.launch
 import com.example.steampulse.data.FirestoreManager
@@ -86,6 +87,9 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
         }
         item {
             ActiveMissionCard(game = selectedGame)
+        }
+        item {
+            PlaytimeChart()
         }
         item {
             RecentActivityList(

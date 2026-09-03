@@ -74,4 +74,10 @@ object FirestoreManager {
             emptyList()
         }
     }
+
+    suspend fun getWeeklyPlaytimeTrends(): List<Float> {
+        // In a real scenario, this would query a timeseries collection of playtime logs.
+        // For the sake of the demo, we return mock trend data.
+        return listOf(12f, 18f, 15f, 24f, 10f, 32f, 28f)
+    }
 }
